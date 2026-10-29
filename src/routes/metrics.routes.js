@@ -10,3 +10,4 @@ router.get('/overview', metricsController.getOverview);
 router.get('/endpoints', metricsController.getEndpoints);
 
 export default router;
+

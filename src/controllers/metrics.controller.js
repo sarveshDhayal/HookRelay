@@ -29,3 +29,4 @@ export async function getEndpoints(req, res, next) {
     next(err);
   }
 }
+
