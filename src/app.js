@@ -1,7 +1,13 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { errorHandler } from './middleware/error.middleware.js';
 import { AppError } from './utils/errors.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const dashboardDistPath = path.join(__dirname, '../dashboard/dist');
 
 // Route imports
 import authRoutes from './routes/auth.routes.js';
@@ -48,7 +54,20 @@ app.use('/api/v1/deliveries', deliveryRoutes);
 app.use('/v1/deliveries', deliveryRoutes); // Direct alias for replay endpoint
 app.use('/api/v1/metrics', metricsRoutes);
 
-// Catch-all for undefined routes
+// Serve static frontend assets from dashboard/dist
+app.use(express.static(dashboardDistPath));
+
+// Single Page Application (SPA) routing fallback for non-API routes
+app.get('*', (req, res, next) => {
+  if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/v1')) {
+    return next();
+  }
+  res.sendFile(path.join(dashboardDistPath, 'index.html'), (err) => {
+    if (err) next();
+  });
+});
+
+// Catch-all for undefined API routes
 app.all('*', (req, res, next) => {
   next(new AppError(`Endpoint ${req.originalUrl} not found on this server`, 404));
 });

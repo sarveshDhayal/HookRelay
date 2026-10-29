@@ -138,3 +138,21 @@
     where $f_i$ is the failure rate of endpoint $i$, $\mu$ is the population mean failure rate across all endpoints, and $\sigma$ is the sample standard deviation with Bessel's correction ($\sqrt{\frac{1}{N-1}\sum (f_i - \mu)^2}$).
   - Endpoints with $z_i \ge 2.0$ (or $\ge 1.6$ for small sample sizes $N < 8$) and non-zero failures are flagged as **`ANOMALY`**.
   - In statistics, an observation with $z > 2$ resides in the extreme top $2.5\%$ tail of a distribution, indicating an abnormal deviation requiring immediate operator attention.
+
+
+---
+
+## 13. Frontend Architecture & Dashboard UI (Web App Programming)
+- **Problem:** Monitoring webhook deliveries, inspecting attempt HTTP logs, and managing dead letters in production requires a clean, low-latency UI.
+- **Decision:**
+  - Built with **React 18 + Vite** using functional components and standard hooks.
+  - **State Management:**
+    - `useContext` for global Authentication and Theme states.
+    - `useReducer` for complex delivery log table filtering (`status`, `endpointId`, `page`).
+    - `useEffect` with interval cleanup for 5-second polling of live metrics.
+  - **Component Design & Aesthetics:**
+    - Dark theme default with light theme toggle persisted in `localStorage`.
+    - Soft glassmorphism cards (`backdrop-blur-md`, subtle border highlights, rounded-2xl).
+    - Slide-over inspection drawer: clicking any delivery opens a right drawer with the full chronological attempt timeline, HTTP status code badges, latencies, and payload snippet, preserving table scroll position and filters.
+    - Dead-letter management with one-click re-queuing and immediate toast confirmation.
+  - **Dual Serving:** The backend Express server serves static compiled assets from `dashboard/dist` with Single-Page Application (SPA) wildcard fallback, while supporting standalone Vite development on port 5173.
