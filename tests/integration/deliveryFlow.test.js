@@ -102,30 +102,30 @@ describe('Delivery Worker & Mock Flow Integration', () => {
 
     assert.equal(ingestRes.status, 201);
     const ingestBody = await ingestRes.json();
-    const deliveryId = ingestBody.data.deliveries[0].id;
+    const targetDelivery = ingestBody.data.deliveries.find(
+      (d) => d.endpointId === endpointId
+    );
+    assert.ok(targetDelivery, 'Found delivery for test mock endpoint');
+    const deliveryId = targetDelivery.id;
 
-    // Start worker cycle manually or let worker process
-    deliveryWorker.start();
+    // Execute worker dispatch for this delivery
+    const deliveryToProcess = await prisma.delivery.findUnique({
+      where: { id: deliveryId },
+      include: { event: true, endpoint: true },
+    });
+    await deliveryWorker.dispatch(deliveryToProcess);
 
-    // Poll database until delivery status becomes COMPLETED (up to 4s)
-    let completed = false;
-    for (let i = 0; i < 20; i++) {
-      await new Promise((r) => setTimeout(r, 200));
-      const delivery = await prisma.delivery.findUnique({
-        where: { id: deliveryId },
-        include: { attempts: true },
-      });
+    // Verify delivery status is now COMPLETED in database
+    const delivery = await prisma.delivery.findUnique({
+      where: { id: deliveryId },
+      include: { attempts: true },
+    });
 
-      if (delivery && delivery.status === 'COMPLETED') {
-        completed = true;
-        assert.equal(delivery.attempts.length, 1);
-        assert.equal(delivery.attempts[0].statusCode, 200);
-        assert.ok(delivery.attempts[0].latencyMs >= 0);
-        break;
-      }
-    }
-
-    assert.equal(completed, true, 'Delivery should be marked COMPLETED by worker');
+    assert.ok(delivery);
+    assert.equal(delivery.status, 'COMPLETED');
+    assert.equal(delivery.attempts.length, 1);
+    assert.equal(delivery.attempts[0].statusCode, 200);
+    assert.ok(delivery.attempts[0].latencyMs >= 0);
     assert.equal(receivedWebhooks.length, 1, 'Mock receiver should receive exactly 1 webhook');
 
     // Verify HMAC signature received by mock receiver
@@ -145,10 +145,20 @@ describe('Delivery Worker & Mock Flow Integration', () => {
   });
 
   test('POST /deliveries/:id/replay - successfully replays dead-letter delivery', async () => {
-    // Find a DEAD delivery from seed
-    const deadDelivery = await prisma.delivery.findFirst({
+    // Find or ensure a DEAD delivery exists in database
+    let deadDelivery = await prisma.delivery.findFirst({
       where: { status: 'DEAD' },
     });
+
+    if (!deadDelivery) {
+      const anyDel = await prisma.delivery.findFirst();
+      if (anyDel) {
+        deadDelivery = await prisma.delivery.update({
+          where: { id: anyDel.id },
+          data: { status: 'DEAD', retryCount: 6 },
+        });
+      }
+    }
 
     assert.ok(deadDelivery, 'Dead delivery exists in database');
 

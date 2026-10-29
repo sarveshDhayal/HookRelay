@@ -3,6 +3,7 @@ import { z } from 'zod';
 import * as eventController from '../controllers/event.controller.js';
 import { requireApiKey } from '../middleware/apiKey.middleware.js';
 import { requireAuth } from '../middleware/auth.middleware.js';
+import { rateLimiter } from '../middleware/rateLimiter.middleware.js';
 import { validate } from '../middleware/validate.middleware.js';
 
 const router = Router();
@@ -30,8 +31,8 @@ function requireApiKeyOrAuth(req, res, next) {
   return requireAuth(req, res, next);
 }
 
-// Ingestion endpoint (protected by API key or JWT)
-router.post('/', requireApiKeyOrAuth, validate(ingestEventSchema), eventController.ingest);
+// Ingestion endpoint (protected by API key or JWT, and bounded by TokenBucket rate limiter)
+router.post('/', requireApiKeyOrAuth, rateLimiter, validate(ingestEventSchema), eventController.ingest);
 
 // Inspection endpoints for dashboard and developers
 router.get('/', requireApiKeyOrAuth, eventController.list);

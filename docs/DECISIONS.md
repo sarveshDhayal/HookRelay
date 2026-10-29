@@ -102,3 +102,39 @@
 - **Dead Letter Queue (DLQ) & Replay:**
   - After 6 consecutive failed delivery attempts, the delivery transitions to `status = 'DEAD'`.
   - Dead letters are isolated from the active polling loop to avoid wasting worker cycles, and can be inspected in the dashboard and re-queued via `POST /v1/deliveries/:id/replay`.
+
+
+---
+
+## 10. Rate Limiting via Custom TokenBucket (DSA & Computer Networks)
+- **Problem:** Malicious or runaway client scripts can flood the event ingestion API with thousands of requests per second, overwhelming the MySQL database.
+- **Decision:**
+  - Implemented our own in-memory `TokenBucket` algorithm with per-key buckets.
+  - Bucket capacity and refill rates map to user tiers:
+    - **Free Plan / Standard API Key:** 60 requests capacity, refills at $1.0\text{ token/second}$ (60 req/min).
+    - **Pro Plan:** 300 requests capacity, refills at $5.0\text{ tokens/second}$ (300 req/min).
+  - **Lazy Refill vs Active Timers:** Instead of running thousands of background `setInterval` timers in Node.js (which waste CPU and cause memory leaks), tokens are replenished on-demand when a request hits the middleware using the delta formula:
+    $$\Delta t = \text{now} - \text{lastRefill}$$
+    $$\text{tokens} = \min(\text{capacity}, \text{tokens} + \Delta t \times \text{refillRatePerSec})$$
+  - Exceeding the rate limit returns standard **HTTP 429 Too Many Requests** with `Retry-After: <seconds>` and `X-RateLimit-Remaining: 0`.
+
+---
+
+## 11. Observer Pattern & Metrics Architecture (System Design & Prob/Stats)
+- **Problem:** Tightly coupling worker network loops to metrics aggregations violates Separation of Concerns (SOLID) and degrades delivery latency.
+- **Decision:**
+  - Used the **Observer Pattern** via Node's `EventEmitter` (`eventBus.js`).
+  - Worker publishes events: `delivery.succeeded`, `delivery.failed`, `delivery.dead`, `endpoint.paused`.
+  - The metrics module subscribes as an observer and maintains live in-memory telemetry counters.
+  - Database aggregations calculate historical percentiles ($P_{50}$, $P_{95}$) and 24-hour time-series buckets.
+
+---
+
+## 12. Statistical Anomaly Detection (Probability & Stats / ML Bonus)
+- **Problem:** In a multi-tenant webhook platform, a single misconfigured subscriber endpoint might have a massive failure rate, which distorts overall platform health.
+- **Decision:**
+  - Built a statistical outlier detector based on **Z-Scores** (Standard Scores):
+    $$z_i = \frac{f_i - \mu}{\sigma}$$
+    where $f_i$ is the failure rate of endpoint $i$, $\mu$ is the population mean failure rate across all endpoints, and $\sigma$ is the sample standard deviation with Bessel's correction ($\sqrt{\frac{1}{N-1}\sum (f_i - \mu)^2}$).
+  - Endpoints with $z_i \ge 2.0$ (or $\ge 1.6$ for small sample sizes $N < 8$) and non-zero failures are flagged as **`ANOMALY`**.
+  - In statistics, an observation with $z > 2$ resides in the extreme top $2.5\%$ tail of a distribution, indicating an abnormal deviation requiring immediate operator attention.

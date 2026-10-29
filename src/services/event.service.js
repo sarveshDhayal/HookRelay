@@ -39,13 +39,11 @@ export async function ingestEvent({ userId, type, payload, idempotencyKey }) {
     };
   }
 
-  // 2. Find all active endpoints for this user
+  // 2. Find all active endpoints for this user (deliveries are recorded even if paused)
   const endpoints = await prisma.webhookEndpoint.findMany({
     where: {
       userId,
       isActive: true,
-      // If an endpoint is paused by circuit breaker, we don't dispatch new deliveries to it
-      isPaused: false,
     },
   });
 

@@ -9,6 +9,7 @@ import apiKeyRoutes from './routes/apikey.routes.js';
 import endpointRoutes from './routes/endpoint.routes.js';
 import eventRoutes from './routes/event.routes.js';
 import deliveryRoutes from './routes/delivery.routes.js';
+import metricsRoutes from './routes/metrics.routes.js';
 
 export const app = express();
 
@@ -45,6 +46,7 @@ app.use('/api/v1/events', eventRoutes);
 app.use('/v1/events', eventRoutes); // Direct alias for convenience
 app.use('/api/v1/deliveries', deliveryRoutes);
 app.use('/v1/deliveries', deliveryRoutes); // Direct alias for replay endpoint
+app.use('/api/v1/metrics', metricsRoutes);
 
 // Catch-all for undefined routes
 app.all('*', (req, res, next) => {
