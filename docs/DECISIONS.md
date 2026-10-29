@@ -47,3 +47,4 @@
 - **Decision:** Support both Docker Compose containerization and standalone local running with socket / TCP fallback.
 - **Reasoning:**
   - Evaluators or professors running this on diverse laptops (macOS Apple Silicon, Linux, Windows WSL) may or may not have Docker Desktop running. Providing `.env` support for both port 3306/3307 and unix domain socket ensures anyone can run `npm start` immediately.
+

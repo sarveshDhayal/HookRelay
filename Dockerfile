@@ -14,3 +14,4 @@ COPY docs ./docs/
 EXPOSE 4000
 
 CMD ["node", "src/server.js"]
+

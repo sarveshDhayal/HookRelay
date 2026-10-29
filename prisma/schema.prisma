@@ -109,3 +109,4 @@ model DeliveryAttempt {
   @@index([deliveryId])
   @@map("delivery_attempts")
 }
+
