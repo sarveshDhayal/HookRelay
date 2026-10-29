@@ -156,3 +156,14 @@
     - Slide-over inspection drawer: clicking any delivery opens a right drawer with the full chronological attempt timeline, HTTP status code badges, latencies, and payload snippet, preserving table scroll position and filters.
     - Dead-letter management with one-click re-queuing and immediate toast confirmation.
   - **Dual Serving:** The backend Express server serves static compiled assets from `dashboard/dist` with Single-Page Application (SPA) wildcard fallback, while supporting standalone Vite development on port 5173.
+
+
+---
+
+## 14. Testing & Continuous Integration (Software Engineering)
+- **Problem:** A webhook engine involves asynchronous queues, background schedulers, network timeouts, and state machines. Without automated testing, regressions in backoff delays, signature hashing, or database transactions can go unnoticed.
+- **Decision:**
+  - Built a comprehensive test suite of **50 automated tests across 13 suites** using Node's native test runner (`node:test`) and assertion library (`node:assert/strict`), avoiding heavy external test dependencies like Jest.
+  - **Full Lifecycle Integration Test (`fullLifecycle.test.js`):** Tests the end-to-end failure state machine by sending events to a crashing receiver, verifying all 6 retry attempts with status transitions (`PENDING` $\rightarrow$ `FAILED` $\rightarrow$ `DEAD`), verifying that the Circuit Breaker automatically pauses the endpoint at 5 consecutive failures, and successfully executing a dead-letter replay.
+  - **Automated CI Workflow (`.github/workflows/ci.yml`):** Runs on push and pull requests to `main` using a live `mysql:8.0` Docker service container, synchronizing the schema (`npx prisma db push`), running seeds, executing the full test suite, and building the Vite frontend bundle.
+  - **Benchmarking (`load-test.js`):** Employs `autocannon` to verify gateway routing ($>11,000\text{ req/sec}$) and event ingestion pipeline throughput with active rate limiting.

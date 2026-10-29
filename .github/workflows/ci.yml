@@ -1,0 +1,59 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-build:
+    name: Test & Build Suite
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: hookrelay_db
+          MYSQL_USER: hookrelay
+          MYSQL_PASSWORD: hookrelay_secret
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping -u hookrelay -phookrelay_secret" --health-interval=5s --health-timeout=5s --health-retries=10
+
+    env:
+      PORT: 4000
+      NODE_ENV: test
+      DATABASE_URL: "mysql://hookrelay:hookrelay_secret@127.0.0.1:3306/hookrelay_db"
+      JWT_SECRET: "ci_pipeline_secret_jwt_key_at_least_32_bytes_long"
+      JWT_REFRESH_SECRET: "ci_pipeline_refresh_jwt_key_at_least_32_bytes"
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Backend Dependencies
+        run: npm ci
+
+      - name: Synchronize Database Schema with MySQL 8
+        run: npx prisma db push
+
+      - name: Seed Database
+        run: npm run prisma:seed
+
+      - name: Run Unit & Integration Test Suite
+        run: npm test
+
+      - name: Build React Dashboard
+        run: |
+          cd dashboard
+          npm ci
+          npm run build
