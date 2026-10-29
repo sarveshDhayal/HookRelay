@@ -67,3 +67,13 @@
   - Access Token: 15-minute lifespan, signed with HMAC-SHA256, contains `{ id, email, role, plan }`.
   - Refresh Token: 7-day lifespan, stored by the client to rotate access tokens without forcing re-login.
   - Role-Based Access Control (RBAC): `requireRole(['ADMIN'])` checks enforce strict authorization boundaries between platform administrators and developers.
+
+
+---
+
+## 7. Atomic Ingestion & Idempotency Guarantees (DBMS ACID)
+- **Problem:** When an event is ingested (e.g., `payment.succeeded`), it must generate delivery rows for every subscribed endpoint. If the server crashes after saving the `Event` row but before generating the `Delivery` rows, the event becomes orphaned and deliveries are permanently lost. Conversely, if a client experiences a network timeout and retries the HTTP request, duplicate events and duplicate deliveries must not be created.
+- **Decision:**
+  - **Atomicity via Database Transaction:** `prisma.$transaction()` guarantees that both the `Event` row and all corresponding `Delivery` rows are committed together in one atomic transaction, or rolled back completely if any failure occurs.
+  - **Idempotency Key Constraints:** The `idempotencyKey` column has a unique B-Tree index. Before inserting, we query by this key; if found, the existing event is returned without executing duplicate inserts. If two identical requests hit concurrently, the unique database constraint blocks the duplicate at the storage engine level.
+  - **Flexible Topic Subscription:** Endpoints support wildcard (`*`), exact matching (`order.created`), or namespace matching (`payment.*`) to filter inbound events.
