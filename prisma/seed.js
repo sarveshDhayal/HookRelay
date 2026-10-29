@@ -9,6 +9,12 @@ function sha256(text) {
 }
 
 async function main() {
+  const existingUsers = await prisma.user.count();
+  if (existingUsers > 0 && process.env.FORCE_SEED !== 'true') {
+    console.log('[Seed] Database already seeded (' + existingUsers + ' users exist). Skipping seed to preserve existing data.');
+    return;
+  }
+
   console.log('[Seed] Clearing existing records for clean state...');
   await prisma.deliveryAttempt.deleteMany({});
   await prisma.delivery.deleteMany({});
