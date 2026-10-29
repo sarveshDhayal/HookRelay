@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: hookrelay
+    runtime: node
+    plan: free
+    buildCommand: npm install && npx prisma generate && cd dashboard && npm install && npm run build && cd ..
+    startCommand: npx prisma db push && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: DELIVERY_TIMEOUT_MS
+        value: 10000
+      - key: CIRCUIT_BREAKER_THRESHOLD
+        value: 5
