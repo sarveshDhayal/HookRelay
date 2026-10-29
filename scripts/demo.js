@@ -240,3 +240,4 @@ runDemo().catch((err) => {
   console.error(red('Demo encountered an error:'), err);
   process.exit(1);
 });
+

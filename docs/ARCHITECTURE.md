@@ -170,3 +170,4 @@ sequenceDiagram
     API->>DB: UPDATE deliveries SET status = 'PENDING', retryCount = 0, nextAttemptAt = NOW()
     API-->>Client: HTTP 200 OK (Re-queued)
 ```
+

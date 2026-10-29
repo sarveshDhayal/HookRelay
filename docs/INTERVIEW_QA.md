@@ -75,3 +75,4 @@
 > 1. Single worker process: The in-process worker does not support horizontal multi-node scaling without row lock contention.
 > 2. In-memory TokenBucket: Rate limit buckets are stored in process memory, meaning restarting the server resets burst allowances, and running behind a multi-server load balancer would require Redis for shared token state.
 > 3. Polling overhead: Database polling at 1-second intervals introduces up to 1 second of latency before a scheduled retry is picked up.
+

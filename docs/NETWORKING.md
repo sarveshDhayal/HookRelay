@@ -112,3 +112,4 @@ npm run demo
      - `X-HookRelay-Event-Id: ...`
    - View **File Data / JSON**: Inspect the serialized body `{ "customer": "alice@student.dev", ... }`.
 5. **Follow TCP Stream:** Right-click the packet and select **Follow $\to$ TCP Stream** to view the full bidirectional plaintext ASCII exchange.
+

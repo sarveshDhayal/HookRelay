@@ -96,3 +96,4 @@ $$\text{Delay}_{\text{jittered}} = \text{base} + U \cdot \left(\min(\text{cap}, 
 The expected delay $\mathbb{E}[\text{Delay}]$ is:
 $$\mathbb{E}[\text{Delay}] = \frac{\text{base} + \min(\text{cap}, T(n))}{2}$$
 This guarantees that while retries back off exponentially, arrival times at the downstream service form a continuous uniform distribution, reducing peak server load by up to $80\%$.
+

@@ -90,3 +90,4 @@ erDiagram
 3. **`Event` $\to$ `Delivery`:** `ON DELETE CASCADE`.
 4. **`WebhookEndpoint` $\to$ `Delivery`:** `ON DELETE CASCADE`.
 5. **`Delivery` $\to$ `DeliveryAttempt`:** `ON DELETE CASCADE`. An attempt cannot exist without its parent delivery job.
+

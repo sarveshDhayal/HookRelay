@@ -89,3 +89,4 @@ For low-maintenance cloud deployments with managed databases:
 | `JWT_REFRESH_SECRET`| **Yes** | — | Cryptographic secret for signing long-lived refresh JWTs |
 | `DELIVERY_TIMEOUT_MS`| No | `10000` | Worker HTTP timeout |
 | `CIRCUIT_BREAKER_THRESHOLD`| No | `5` | Consecutive failures before auto-pausing |
+

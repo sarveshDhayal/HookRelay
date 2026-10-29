@@ -93,3 +93,4 @@ WHERE status = 'PENDING' AND nextAttemptAt <= NOW();
 - `key: deliveries_status_nextAttemptAt_idx` $\to$ Utilizes our composite B-tree index.
 - `filtered: 100.00%` $\to$ Every row fetched from the index matches the query condition; 0 wasted row reads.
 - **Complexity:** $O(\log N + K)$ where $K$ is the number of due rows. Polling executes in $<1\text{ ms}$ regardless of how many millions of historical completed deliveries exist.
+
