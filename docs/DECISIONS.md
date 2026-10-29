@@ -48,3 +48,22 @@
 - **Reasoning:**
   - Evaluators or professors running this on diverse laptops (macOS Apple Silicon, Linux, Windows WSL) may or may not have Docker Desktop running. Providing `.env` support for both port 3306/3307 and unix domain socket ensures anyone can run `npm start` immediately.
 
+
+
+---
+
+## 5. SSRF Defense in Depth (Computer Networks & Web Security)
+- **Problem:** Allowing users to submit arbitrary webhook destination URLs introduces Server-Side Request Forgery (SSRF). An attacker could configure `http://169.254.169.254/latest/meta-data/` to dump cloud IAM credentials, or target internal cluster services (`http://localhost:3306`, `http://10.0.0.5:8080`).
+- **Decision:**
+  - Parse URLs and validate protocols (only `http:` and `https:`).
+  - Perform real-time DNS resolution using `dns.promises.lookup(hostname, { all: true })`.
+  - Validate every resolved IP against RFC 1918 private subnets (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`), loopback (`127.0.0.0/8`), link-local (`169.254.0.0/16`), and IPv6 equivalents (`::1`, `fe80::/10`).
+  - Enforce SSRF checks both on endpoint registration and subsequent URL updates.
+
+---
+
+## 6. Authentication Architecture (JWT Access + Refresh Tokens & RBAC)
+- **Decision:** Dual-token JWT authentication architecture:
+  - Access Token: 15-minute lifespan, signed with HMAC-SHA256, contains `{ id, email, role, plan }`.
+  - Refresh Token: 7-day lifespan, stored by the client to rotate access tokens without forcing re-login.
+  - Role-Based Access Control (RBAC): `requireRole(['ADMIN'])` checks enforce strict authorization boundaries between platform administrators and developers.
