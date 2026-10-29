@@ -1,15 +1,21 @@
 import { app } from './app.js';
 import { config } from './config.js';
 import { prisma } from './db.js';
+import { deliveryWorker } from './workers/deliveryWorker.js';
 
 const server = app.listen(config.port, () => {
   console.log(`[HookRelay API] Server running on port ${config.port} (${config.nodeEnv})`);
   console.log(`[HookRelay API] Health check available at http://localhost:${config.port}/health`);
+  
+  // Start the background delivery worker
+  deliveryWorker.start();
 });
 
 // Graceful shutdown handling
 async function shutdown(signal) {
   console.log(`\n[HookRelay API] Received ${signal}. Shutting down gracefully...`);
+  deliveryWorker.stop();
+  
   server.close(async () => {
     console.log('[HookRelay API] HTTP server closed.');
     await prisma.$disconnect();

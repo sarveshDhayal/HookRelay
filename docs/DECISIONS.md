@@ -77,3 +77,28 @@
   - **Atomicity via Database Transaction:** `prisma.$transaction()` guarantees that both the `Event` row and all corresponding `Delivery` rows are committed together in one atomic transaction, or rolled back completely if any failure occurs.
   - **Idempotency Key Constraints:** The `idempotencyKey` column has a unique B-Tree index. Before inserting, we query by this key; if found, the existing event is returned without executing duplicate inserts. If two identical requests hit concurrently, the unique database constraint blocks the duplicate at the storage engine level.
   - **Flexible Topic Subscription:** Endpoints support wildcard (`*`), exact matching (`order.created`), or namespace matching (`payment.*`) to filter inbound events.
+
+
+---
+
+## 8. In-Process Priority Queue: Custom MinHeap Scheduler (DSA / DAA)
+- **Problem:** The worker must dispatch retried deliveries at specific future timestamps (`nextAttemptAt`). Storing jobs in a simple JavaScript Array and calling `array.sort()` on every tick takes $O(N \log N)$ time, which degrades quickly under heavy load.
+- **Decision:**
+  - Implemented a custom complete binary Min-Heap (`MinHeap`) backed by a flat array.
+  - Root element ($A[0]$) always contains the delivery with the earliest `nextAttemptAt` ($O(1)$ inspect).
+  - Extracting the due job (`pop()`) and inserting new jobs (`push()`) take $O(\log N)$ time via `_bubbleUp` and `_bubbleDown`.
+  - Space complexity is $O(N)$ with no pointer overhead compared to linked node structures.
+
+---
+
+## 9. Backoff Strategy Pattern & Full Jitter (System Design & Probability)
+- **Problem:** When a target endpoint experiences an outage (e.g., 500 error or database deadlock), retrying immediately overwhelms the recovering server. Furthermore, if all retries use deterministic exponential backoff ($T = \text{base} \times 2^n$), they will all synchronize and hit the target at the exact same second ("Thundering Herd").
+- **Decision:**
+  - Used the **Strategy Pattern** with a common `BackoffStrategy` interface, allowing pluggable algorithms (`FixedBackoff` vs `ExponentialBackoff`).
+  - Implemented the **Full Jitter** algorithm:
+    $$T_{\text{temp}} = \min(\text{maxDelay}, \text{base} \cdot \text{factor}^{n-1})$$
+    $$\text{delay} = \lfloor \text{base} + \text{random}() \cdot (T_{\text{temp}} - \text{base}) \rfloor$$
+  - Spreading retry intervals across the time domain flattens spikes and reduces target server concurrency by up to $80\%$.
+- **Dead Letter Queue (DLQ) & Replay:**
+  - After 6 consecutive failed delivery attempts, the delivery transitions to `status = 'DEAD'`.
+  - Dead letters are isolated from the active polling loop to avoid wasting worker cycles, and can be inspected in the dashboard and re-queued via `POST /v1/deliveries/:id/replay`.
