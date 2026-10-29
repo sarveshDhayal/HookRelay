@@ -18,3 +18,4 @@ services:
         value: 10000
       - key: CIRCUIT_BREAKER_THRESHOLD
         value: 5
+
