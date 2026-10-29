@@ -38,3 +38,4 @@ router.get('/', requireApiKeyOrAuth, eventController.list);
 router.get('/:id', requireApiKeyOrAuth, eventController.getById);
 
 export default router;
+

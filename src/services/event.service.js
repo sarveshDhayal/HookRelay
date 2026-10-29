@@ -143,3 +143,4 @@ export async function getEventById(userId, eventId, userRole) {
 
   return event;
 }
+

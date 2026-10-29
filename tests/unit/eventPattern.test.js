@@ -29,3 +29,4 @@ describe('Event Pattern Matching', () => {
     assert.equal(matchesEventType(subs, 'customer.created'), false);
   });
 });
+
