@@ -3,8 +3,8 @@ services:
     name: hookrelay
     runtime: node
     plan: free
-    buildCommand: npm install && npx prisma generate && cd dashboard && npm install && npm run build && cd ..
-    startCommand: npx prisma db push && npm start
+    buildCommand: npm install && npm run build
+    startCommand: npx prisma db push && npm run prisma:seed && npm start
     envVars:
       - key: NODE_ENV
         value: production
@@ -18,4 +18,3 @@ services:
         value: 10000
       - key: CIRCUIT_BREAKER_THRESHOLD
         value: 5
-
