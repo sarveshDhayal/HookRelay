@@ -11,3 +11,4 @@ export const eventBus = new EventEmitter();
 
 // Allow up to 50 listeners without Node warning
 eventBus.setMaxListeners(50);
+

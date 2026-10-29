@@ -305,3 +305,4 @@ export class DeliveryWorker {
 
 // Worker singleton
 export const deliveryWorker = new DeliveryWorker();
+
