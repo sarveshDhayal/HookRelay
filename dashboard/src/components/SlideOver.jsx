@@ -190,3 +190,4 @@ export function SlideOver({ isOpen, onClose, delivery }) {
     </div>
   );
 }
+
