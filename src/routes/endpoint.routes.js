@@ -33,3 +33,4 @@ router.post('/:id/resume', endpointController.resume);
 router.post('/:id/pause', endpointController.pause);
 
 export default router;
+

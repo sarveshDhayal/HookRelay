@@ -115,3 +115,4 @@ export async function pauseEndpoint(userId, endpointId, userRole) {
     },
   });
 }
+

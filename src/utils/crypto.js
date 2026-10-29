@@ -35,3 +35,4 @@ export function verifyHmacSignature(secret, timestamp, payloadString, expectedSi
   }
   return crypto.timingSafeEqual(actualBuffer, expectedBuffer);
 }
+

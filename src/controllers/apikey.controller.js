@@ -47,3 +47,4 @@ export async function revoke(req, res, next) {
     next(err);
   }
 }
+

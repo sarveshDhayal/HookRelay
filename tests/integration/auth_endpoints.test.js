@@ -152,3 +152,4 @@ describe('Auth & Endpoints API Integration', () => {
     assert.equal(resumed.data.consecutiveFailures, 0);
   });
 });
+

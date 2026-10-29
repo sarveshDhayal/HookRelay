@@ -18,3 +18,4 @@ router.get('/', apiKeyController.list);
 router.delete('/:id', apiKeyController.revoke);
 
 export default router;
+
