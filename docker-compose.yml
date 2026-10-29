@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: hookrelay-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: hookrelay_db
+      MYSQL_USER: hookrelay
+      MYSQL_PASSWORD: hookrelay_secret
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "hookrelay", "-phookrelay_secret"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hookrelay-api
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      NODE_ENV: production
+      DATABASE_URL: mysql://hookrelay:hookrelay_secret@mysql:3306/hookrelay_db
+      JWT_SECRET: super_secret_jwt_key_for_development_purposes_only_32_bytes
+      JWT_REFRESH_SECRET: super_secret_jwt_refresh_key_development_32_bytes
+      WORKER_POLL_INTERVAL_MS: 1000
+      WORKER_BATCH_SIZE: 20
+      DELIVERY_TIMEOUT_MS: 10000
+      CIRCUIT_BREAKER_THRESHOLD: 5
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mock-receiver:
+    build:
+      context: ./tools/mock-receiver
+      dockerfile: Dockerfile
+    container_name: hookrelay-mock-receiver
+    restart: unless-stopped
+    ports:
+      - "4001:4001"
+    environment:
+      PORT: 4001
+
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    container_name: hookrelay-dashboard
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_BASE_URL: http://localhost:4000/api/v1
+    depends_on:
+      - api
+
+volumes:
+  mysql_data:
