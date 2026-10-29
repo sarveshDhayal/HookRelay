@@ -39,3 +39,4 @@ describe('Circuit Breaker Logic (System Design Coursework)', () => {
     assert.equal(consecutiveFailures, 0);
   });
 });
+

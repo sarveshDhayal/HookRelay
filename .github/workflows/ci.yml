@@ -57,3 +57,4 @@ jobs:
           cd dashboard
           npm ci
           npm run build
+
